@@ -1,0 +1,45 @@
+classDiagram
+    class Owner {
+        +String name
+        +List~Pet~ pets
+        +Dict~String, Number~ availability
+        +add_pet(Pet pet)
+        +remove_pet(Pet pet)
+        +set_name(String name)
+        +set_availability(String day, Number hours)
+    }
+
+    class Pet {
+        +String name
+        +String type
+        +List~Task~ tasks
+        +add_task(Task task)
+        +remove_task(Task task)
+        +set_name(String name)
+        +set_type(String type)
+    }
+
+    class Task {
+        +String name
+        +String status
+        +int priority
+        +String recurrence
+        +Date due_date
+        +int duration_minutes
+        +mark_complete()
+        +update_priority(int priority)
+        +set_recurrence(String recurrence)
+    }
+
+    class Scheduler {
+        +List~Task~ daily_task_list
+        +build_schedule(Owner owner)
+        +add_task(Task task)
+        +sort_tasks()
+        +explain_schedule()
+    }
+
+    Owner "1" o-- "*" Pet : owns
+    Pet "1" o-- "*" Task : has
+    Scheduler ..> Owner : schedules for
+    Scheduler ..> Task : orders / sorts
