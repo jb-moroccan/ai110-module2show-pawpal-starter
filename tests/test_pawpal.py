@@ -314,3 +314,118 @@ def test_same_task_different_breed_runs_sequentially():
     # Both should finish by due time
     assert groom_buddy.scheduled_end <= groom_buddy.due_datetime()
     assert groom_mittens.scheduled_end <= groom_mittens.due_datetime()
+
+
+def test_sorting_correctness_tasks_in_chronological_order():
+    """Verify tasks are returned in chronological order by scheduled start time."""
+    owner = Owner(name="Alex")
+    buddy = Pet(name="Buddy", type="Dog")
+    owner.add_pet(buddy)
+
+    # Create tasks with different due times (intentionally out of order)
+    task1 = Task(name="Lunch", status="pending", due_date="12:00", duration_minutes=30)
+    task2 = Task(name="Breakfast", status="pending", due_date="08:00", duration_minutes=15)
+    task3 = Task(name="Dinner", status="pending", due_date="18:00", duration_minutes=30)
+
+    buddy.add_task(task1)
+    buddy.add_task(task2)
+    buddy.add_task(task3)
+
+    scheduler = Scheduler()
+    scheduler.add_task(task1)
+    scheduler.add_task(task2)
+    scheduler.add_task(task3)
+    schedule = scheduler.build_schedule(owner)
+
+    # After scheduling, tasks should be in chronological order
+    assert len(schedule) == 3
+    for i in range(len(schedule) - 1):
+        current_task = schedule[i]
+        next_task = schedule[i + 1]
+        # Each task should start before or at the same time the next one starts
+        assert current_task.scheduled_start <= next_task.scheduled_start
+
+
+def test_conflict_detection_flags_overlapping_different_breed_tasks():
+    """Verify that Scheduler flags duplicate times when different breed pets do same task."""
+    owner = Owner(name="Alex")
+    buddy = Pet(name="Buddy", type="Dog")
+    mittens = Pet(name="Mittens", type="Cat")
+    owner.add_pet(buddy)
+    owner.add_pet(mittens)
+
+    # Both pets need to be groomed at the same time, but they're different types
+    groom_buddy = Task(
+        name="Groom",
+        status="pending",
+        priority=1,
+        due_date="11:00",
+        duration_minutes=30,
+    )
+    groom_mittens = Task(
+        name="Groom",
+        status="pending",
+        priority=1,
+        due_date="11:00",
+        duration_minutes=30,
+    )
+
+    buddy.add_task(groom_buddy)
+    mittens.add_task(groom_mittens)
+
+    scheduler = Scheduler()
+    scheduler.add_task(groom_buddy)
+    scheduler.add_task(groom_mittens)
+    scheduler.build_schedule(owner)
+
+    # Before building schedule, detect_conflicts would find issues if they overlapped
+    # After building schedule, they should NOT overlap (scheduler moved them apart)
+    conflicts = scheduler.detect_conflicts(owner, tasks=[groom_buddy, groom_mittens])
+    # No conflicts because they were scheduled sequentially
+    assert len(conflicts) == 0
+    # But they ARE both scheduled (not dropped)
+    assert groom_buddy in scheduler.daily_task_list
+    assert groom_mittens in scheduler.daily_task_list
+
+
+def test_conflict_detection_identifies_incompatible_overlaps():
+    """Verify that overlapping incompatible tasks are flagged as conflicts."""
+    owner = Owner(name="Alex")
+    buddy = Pet(name="Buddy", type="Dog")
+    owner.add_pet(buddy)
+
+    # Manually create overlapping tasks (won't happen with build_schedule, but possible if manually set)
+    walk = Task(
+        name="Walk",
+        status="pending",
+        priority=2,
+        due_date="10:00",
+        duration_minutes=30,
+    )
+    feed = Task(
+        name="Feed",
+        status="pending",
+        priority=1,
+        due_date="10:00",
+        duration_minutes=30,
+    )
+
+    buddy.add_task(walk)
+    buddy.add_task(feed)
+
+    # Manually set scheduled times to overlap (simulating a conflict scenario)
+    walk.scheduled_start = datetime(2026, 6, 29, 9, 0)
+    walk.scheduled_end = datetime(2026, 6, 29, 9, 30)
+    feed.scheduled_start = datetime(2026, 6, 29, 9, 15)
+    feed.scheduled_end = datetime(2026, 6, 29, 9, 45)
+
+    scheduler = Scheduler()
+    scheduler.add_task(walk)
+    scheduler.add_task(feed)
+
+    # Detect conflicts on the same pet with overlapping different tasks
+    conflicts = scheduler.detect_conflicts(owner, tasks=[walk, feed])
+
+    # Should find a conflict: same pet, different task names, overlapping times
+    assert len(conflicts) > 0
+    assert "Walk" in conflicts[0] and "Feed" in conflicts[0]

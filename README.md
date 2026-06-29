@@ -47,14 +47,12 @@ pip install -r requirements.txt
 Sample of app's CLI output to see what a generated plan looks like:
 
 ```
-Today's Schedule — Owner: Alex
-------------------
-08:00 — Feed Buddy (15 min) [priority: 1]
-09:00 — Feed Mittens (10 min) [priority: 1]
-12:30 — Walk Buddy (30 min) [priority: 3]
+TODOOOOOOOOOO
 ```
 
 ## 🧪 Testing PawPal+
+
+
 
 ```bash
 # Run the full test suite:
@@ -64,10 +62,40 @@ pytest
 pytest --cov
 ```
 
+### Test Coverage
+
+The test suite (`tests/test_pawpal.py`) includes 13 tests covering:
+
+1. **Task Management** — Creating tasks, marking complete, tracking status changes
+2. **Pet & Owner Operations** — Adding pets, resolving pet identity for duplicate task names
+3. **Scheduling Correctness** — Tasks scheduled in chronological order by start time
+4. **Recurrence Logic** — Daily and weekly task recurrence creates next occurrences correctly
+5. **Conflict Detection** — Detects overlapping incompatible tasks; permits parallel execution for same-breed pets doing the same task
+6. **Time Management** — Tasks finish by their due times; different pet types are scheduled sequentially to avoid conflicts
+7. **Mixed Recurrence** — Daily and weekly tasks coexist without conflicts
+
+Key tests verify:
+- ✓ Sorting correctness: tasks returned in chronological order
+- ✓ Recurrence logic: daily task completion creates next day's task
+- ✓ Conflict detection: overlapping incompatible tasks are flagged
+- ✓ Parallel execution: same task for same-breed pets runs simultaneously
+- ✓ Sequential scheduling: same task for different-breed pets avoids conflicts
+
+Confidence Level: 4 stars - all tests past, not 100% if every possible edge case has been handled or super complex conflicts have been able to be resolved
+
 Sample test output:
 
 ```
-# Paste your pytest output here
+PS C:\Users\jbous\git\CodePath AI\ai110-module2show-pawpal-starter> python -m pytest                                                                                      
+============================================================================== test session starts ==============================================================================
+platform win32 -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\jbous\git\CodePath AI\ai110-module2show-pawpal-starter
+plugins: anyio-4.14.0
+collected 13 items                                                                                                                                                               
+
+tests\test_pawpal.py .............                                                                                                                                         [100%]
+
+============================================================================== 13 passed in 0.14s ===============================================================================
 ```
 
 ## 📐 Smarter Scheduling

@@ -82,54 +82,65 @@ st.caption("Add a task for one of your pets and send it to the scheduler.")
 
 if owner.pets:
     pet_names = [pet.name for pet in owner.pets]
-    selected_pet_name = st.selectbox("Assign task to pet", pet_names)
+
+    # Use selectbox index-based approach to ensure we get the correct pet
+    pet_index = st.selectbox("Assign task to pet", range(len(pet_names)), format_func=lambda i: pet_names[i], key="task_pet_selector")
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        task_title = st.text_input("Task title", value="Morning walk", key="task_title")
+        task_title = st.text_input("Task title", key="task_title_input")
     with col2:
-        duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20, key="task_duration")
+        duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20, key="task_duration_input")
     with col3:
-        priority = st.selectbox("Priority", ["low", "medium", "high"], index=2, key="task_priority")
+        priority = st.selectbox("Priority", ["low", "medium", "high"], index=2, key="task_priority_input")
+
+    col_due1, col_due2 = st.columns(2)
+    with col_due1:
+        due_hour = st.number_input("Due hour", min_value=0, max_value=23, value=12, key="task_due_hour")
+    with col_due2:
+        due_minute = st.number_input("Due minute", min_value=0, max_value=59, value=0, key="task_due_minute")
 
     if st.button("Add task"):
         if task_title.strip():
-            selected_pet = next((pet for pet in owner.pets if pet.name == selected_pet_name), None)
-            if selected_pet is not None:
-                priority_map = {"low": 3, "medium": 2, "high": 1}
-                task = Task(
-                    name=task_title.strip(),
-                    priority=priority_map[priority],
-                    duration_minutes=int(duration),
-                    due_date="Today",
-                )
-                selected_pet.add_task(task)
-                scheduler.add_task(task)
-                st.session_state.owner = owner
-                st.session_state.scheduler = scheduler
-                st.success(f"Added '{task.name}' for {selected_pet.name}.")
-            else:
-                st.warning("Please select a valid pet.")
+            # Get the selected pet using the index directly from owner.pets
+            selected_pet = owner.pets[pet_index]
+
+            priority_map = {"low": 3, "medium": 2, "high": 1}
+            task = Task(
+                name=task_title.strip(),
+                priority=priority_map[priority],
+                duration_minutes=int(duration),
+                due_date=f"{due_hour:02d}:{due_minute:02d}",
+            )
+            selected_pet.add_task(task)
+            scheduler.add_task(task)
+            st.session_state.owner = owner
+            st.session_state.scheduler = scheduler
+            st.success(f"Added '{task.name}' for {selected_pet.name}.")
         else:
             st.warning("Please enter a task title first.")
 else:
     st.info("Add a pet before creating tasks.")
 
-all_tasks = [task for pet in owner.pets for task in pet.tasks]
-if all_tasks:
+# Display current tasks organized by pet
+if owner.pets:
     st.write("Current tasks:")
-    task_rows = [
-        {
-            "task": task.name,
-            "pet": next((pet.name for pet in owner.pets if task in pet.tasks), "Unknown"),
-            "duration": task.duration_minutes,
-            "priority": task.priority,
-        }
-        for task in all_tasks
-    ]
-    st.table(task_rows)
+    task_rows = []
+    for pet in owner.pets:
+        for task in pet.tasks:
+            task_rows.append({
+                "task": task.name,
+                "pet": pet.name,
+                "duration": task.duration_minutes,
+                "priority": task.priority,
+            })
+
+    if task_rows:
+        st.table(task_rows)
+    else:
+        st.info("No tasks yet. Add one above.")
 else:
-    st.info("No tasks yet. Add one above.")
+    st.info("No pets yet. Add one before creating tasks.")
 
 st.divider()
 
@@ -138,7 +149,42 @@ st.caption("This button uses the scheduler to build a plan from the current owne
 
 if st.button("Generate schedule"):
     schedule = scheduler.build_schedule(owner)
-    st.write("Today's Schedule")
-    for task in schedule:
-        pet_name = next((pet.name for pet in owner.pets if task in pet.tasks), "Unknown")
-        st.write(f"{task.due_date or ''} — {task.name} ({task.duration_minutes} min) [priority: {task.priority}]")
+
+    st.subheader("Today's Schedule")
+
+    if schedule:
+        # Display earliest start time
+        st.info(f"Owner must start at: {scheduler.get_earliest_start_time_str()}")
+
+        # Create a mapping of task object to pet for reliable lookup
+        task_to_pet = {}
+        for pet in owner.pets:
+            for task in pet.tasks:
+                task_to_pet[id(task)] = pet.name
+
+        # Create a table with all schedule details
+        schedule_rows = []
+        for task in schedule:
+            # Find which pet owns this task using object id
+            pet_name = task_to_pet.get(id(task), "Unknown")
+
+            # Get scheduled times if available
+            if hasattr(task, "scheduled_start") and hasattr(task, "scheduled_end"):
+                start_time = task.scheduled_start.strftime("%H:%M")
+                end_time = task.scheduled_end.strftime("%H:%M")
+                time_slot = f"{start_time}–{end_time}"
+            else:
+                time_slot = "Not scheduled"
+
+            schedule_rows.append({
+                "time": time_slot,
+                "task": task.name,
+                "pet": pet_name,
+                "duration": f"{task.duration_minutes} min",
+                "priority": task.priority,
+                "due": task.due_date or "N/A",
+            })
+
+        st.table(schedule_rows)
+    else:
+        st.warning("No tasks to schedule.")
