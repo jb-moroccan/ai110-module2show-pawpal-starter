@@ -129,7 +129,7 @@ def main():
     scheduler.add_task(groom_mittens)
     scheduler.sort_tasks()
 
-    print(f"All tasks after out-of-order add — Owner: {owner.name}")
+    print(f"All tasks — Owner: {owner.name}")
     print("------------------")
     for task in scheduler.daily_task_list:
         pet = get_pet_for_task(owner, task)
@@ -148,16 +148,10 @@ def main():
         pet_name = pet.name if pet else "Unknown"
         print(f"{task.due_date or ''} — {task.name} ({pet_name}) ({task.duration_minutes} min) [priority: {task.priority}] [{task.status}]")
 
-    print("\nBuddy's tasks:")
-    for task in scheduler.filter_tasks(pet_name="Buddy", owner=owner):
-        pet = get_pet_for_task(owner, task)
-        pet_name = pet.name if pet else "Unknown"
-        print(f"{task.due_date or ''} — {task.name} ({pet_name}) ({task.duration_minutes} min) [priority: {task.priority}] [{task.status}]")
-
     # Build the daily schedule with scheduled times
     scheduler.build_schedule(owner)
 
-    print("\nFinal daily schedule from owner (with scheduled times):")
+    print(f"\nToday's schedule from owner {owner.name} (with scheduled times):")
     print(f"Owner must start at: {scheduler.get_earliest_start_time_str()}")
     print("-" * 80)
     for task in scheduler.daily_task_list:

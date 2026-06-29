@@ -7,6 +7,7 @@ classDiagram
         +remove_pet(Pet pet)
         +set_name(String name)
         +set_availability(String day, Number hours)
+        +get_pet_for_task(Task task) Task
     }
 
     class Pet {
@@ -24,22 +25,32 @@ classDiagram
         +String status
         +int priority
         +String recurrence
-        +Date due_date
+        +String due_date
         +int duration_minutes
+        +DateTime scheduled_start
+        +DateTime scheduled_end
         +mark_complete()
         +update_priority(int priority)
         +set_recurrence(String recurrence)
+        +due_datetime() DateTime
+        +next_occurrence() Task
     }
 
     class Scheduler {
         +List~Task~ daily_task_list
-        +build_schedule(Owner owner)
+        +DateTime earliest_start_time
+        +build_schedule(Owner owner) List~Task~
         +add_task(Task task)
+        +complete_task(Task task, Owner owner) Task
+        +filter_tasks(String status, String pet_name, Owner owner) List~Task~
+        +detect_conflicts(Owner owner, List~Task~ tasks) List~String~
         +sort_tasks()
-        +explain_schedule()
+        +get_earliest_start_time() DateTime
+        +get_earliest_start_time_str() String
+        +explain_schedule() String
     }
 
     Owner "1" o-- "*" Pet : owns
     Pet "1" o-- "*" Task : has
-    Scheduler ..> Owner : schedules for
-    Scheduler ..> Task : orders / sorts
+    Scheduler "1" --> "*" Task : schedules/orders
+    Scheduler "1" --> "1" Owner : uses to build schedule

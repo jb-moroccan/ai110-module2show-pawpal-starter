@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from pawpal_system import Owner, Pet, Task, Scheduler
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
@@ -117,6 +118,7 @@ if owner.pets:
             st.session_state.owner = owner
             st.session_state.scheduler = scheduler
             st.success(f"Added '{task.name}' for {selected_pet.name}.")
+            st.rerun()
         else:
             st.warning("Please enter a task title first.")
 else:
@@ -124,19 +126,22 @@ else:
 
 # Display current tasks organized by pet
 if owner.pets:
-    st.write("Current tasks:")
+    st.markdown("### Current Tasks")
     task_rows = []
     for pet in owner.pets:
         for task in pet.tasks:
+            priority_labels = {1: "🔴 High", 2: "🟡 Medium", 3: "🟢 Low"}
             task_rows.append({
-                "task": task.name,
                 "pet": pet.name,
-                "duration": task.duration_minutes,
-                "priority": task.priority,
+                "task": task.name,
+                "duration": f"{task.duration_minutes} min",
+                "priority": priority_labels.get(task.priority, str(task.priority)),
+                "status": "✓ Complete" if task.status == "complete" else "⏳ Pending",
             })
 
     if task_rows:
-        st.table(task_rows)
+        df = pd.DataFrame(task_rows)
+        st.dataframe(df, use_container_width=True, hide_index=True)
     else:
         st.info("No tasks yet. Add one above.")
 else:
@@ -153,20 +158,22 @@ if st.button("Generate schedule"):
     st.subheader("Today's Schedule")
 
     if schedule:
-        # Display earliest start time
-        st.info(f"Owner must start at: {scheduler.get_earliest_start_time_str()}")
-
-        # Create a mapping of task object to pet for reliable lookup
-        task_to_pet = {}
-        for pet in owner.pets:
-            for task in pet.tasks:
-                task_to_pet[id(task)] = pet.name
+        # Display earliest start time prominently
+        st.success(f"🌅 Owner must start at: **{scheduler.get_earliest_start_time_str()}**")
 
         # Create a table with all schedule details
         schedule_rows = []
+        priority_labels = {1: "🔴 High", 2: "🟡 Medium", 3: "🟢 Low"}
+
+        # Build a mapping of task id to pet for accurate lookup
+        task_id_to_pet = {}
+        for pet in owner.pets:
+            for task in pet.tasks:
+                task_id_to_pet[id(task)] = pet.name
+
         for task in schedule:
-            # Find which pet owns this task using object id
-            pet_name = task_to_pet.get(id(task), "Unknown")
+            # Find which pet owns this task using object id mapping
+            pet_name = task_id_to_pet.get(id(task), "Unknown")
 
             # Get scheduled times if available
             if hasattr(task, "scheduled_start") and hasattr(task, "scheduled_end"):
@@ -181,10 +188,35 @@ if st.button("Generate schedule"):
                 "task": task.name,
                 "pet": pet_name,
                 "duration": f"{task.duration_minutes} min",
-                "priority": task.priority,
+                "priority": priority_labels.get(task.priority, str(task.priority)),
                 "due": task.due_date or "N/A",
             })
 
-        st.table(schedule_rows)
+        df = pd.DataFrame(schedule_rows)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+
+        # Check for conflicts and display them professionally
+        st.markdown("---")
+        st.subheader("Schedule Analysis")
+
+        conflicts = scheduler.detect_conflicts(owner)
+
+        if conflicts:
+            st.warning("⚠️ **Schedule Conflicts Detected**")
+            st.markdown("The following tasks cannot be completed at the same time:")
+
+            # Display each conflict with better formatting
+            for i, conflict in enumerate(conflicts, 1):
+                with st.container():
+                    st.error(f"**Issue {i}:** {conflict}")
+
+            st.info("""
+            **💡 Recommendations:**
+            - Adjust task due times to spread them out
+            - Split tasks across multiple days
+            - Prioritize high-priority tasks
+            """)
+        else:
+            st.success("✓ **No conflicts!** All tasks can be completed on time.")
     else:
-        st.warning("No tasks to schedule.")
+        st.warning("❌ No tasks to schedule. Add some tasks first!")

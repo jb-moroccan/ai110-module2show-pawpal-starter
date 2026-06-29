@@ -42,17 +42,64 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
-## 🖥️ Sample Output
-
-Sample of app's CLI output to see what a generated plan looks like:
+## 🖥️ Sample of app's CLI output to see what a generated plan looks like:
 
 ```
-TODOOOOOOOOOO
+All tasks — Owner: Alex
+------------------
+08:00 — Feed (Buddy) (15 min) [priority: 1] [complete]
+09:00 — Feed (Mittens) (10 min) [priority: 1] [pending]
+10:00 — Fetch (Buddy) (20 min) [priority: 2] [pending]
+10:00 — Fetch (Max) (20 min) [priority: 2] [pending]
+11:00 — Groom (Buddy) (30 min) [priority: 1] [pending]
+11:00 — Groom (Mittens) (30 min) [priority: 1] [pending]
+12:30 — Walk (Buddy) (30 min) [priority: 3] [pending]
+
+Pending tasks:
+09:00 — Feed (Mittens) (10 min) [priority: 1] [pending]
+10:00 — Fetch (Buddy) (20 min) [priority: 2] [pending]
+10:00 — Fetch (Max) (20 min) [priority: 2] [pending]
+11:00 — Groom (Buddy) (30 min) [priority: 1] [pending]
+11:00 — Groom (Mittens) (30 min) [priority: 1] [pending]
+12:30 — Walk (Buddy) (30 min) [priority: 3] [pending]
+
+Completed tasks:
+08:00 — Feed (Buddy) (15 min) [priority: 1] [complete]
+
+Today's schedule from owner Alex (with scheduled times):
+Owner must start at: 08:50
+--------------------------------------------------------------------------------
+[08:50-09:00] Feed                 (Mittens   ) due 09:00 (10 min) [priority: 1]
+[09:40-10:00] Fetch                (Buddy     ) due 10:00 (20 min) [priority: 2]
+[09:40-10:00] Fetch                (Max       ) due 10:00 (20 min) [priority: 2]
+[10:00-10:30] Groom                (Buddy     ) due 11:00 (30 min) [priority: 1]
+[10:30-11:00] Groom                (Mittens   ) due 11:00 (30 min) [priority: 1]
+[12:00-12:30] Walk                 (Buddy     ) due 12:30 (30 min) [priority: 3]
+
+============================================================
+CONFLICT DETECTION DEMO
+============================================================
+
+Scenario 1: No Conflict (same breed, same task)
+------------------------------------------------------------
+Buddy (Dog) and Max (Dog) both performing Fetch at 10:00
+OK: No conflicts detected
+
+Tasks in Scenario 1:
+  10:00 — Fetch (Buddy) (20 min) [priority: 2] [pending]
+  10:00 — Fetch (Max) (20 min) [priority: 2] [pending]
+
+Scenario 2: Conflict (different breeds, same task)
+------------------------------------------------------------
+Buddy (Dog) and Mittens (Cat) both performing Groom at 11:00
+OK: No conflicts detected
+
+Tasks in Scenario 2:
+  11:00 — Groom (Buddy) (30 min) [priority: 1] [pending]
+  11:00 — Groom (Mittens) (30 min) [priority: 1] [pending]
 ```
 
 ## 🧪 Testing PawPal+
-
-
 
 ```bash
 # Run the full test suite:
@@ -113,10 +160,30 @@ tests\test_pawpal.py .............                                              
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Enter the owner's name at the top of the page.
+2. Add one or more pets by entering a name and selecting a type (dog, cat, other).
+3. Select a pet from the dropdown and add a task with a title, duration, priority, and due time.
+4. Repeat step 3 for each task you want to schedule.
+5. Click **Generate schedule** to see today's plan sorted by time and priority, along with any conflict warnings.
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+## ✨ Features
+
+### Scheduling Algorithms
+- **Backwards deadline scheduling** — Tasks are placed as late as possible relative to their due time, minimizing how early the owner has to start. The scheduler works backwards from each deadline so no task misses its window.
+- **Priority-based ordering** — Within the same time window, tasks are sorted by priority (High → Medium → Low), ensuring the most important care happens first.
+- **Parallel execution for same-breed pets** — If two pets of the same type share the same task and due time (e.g., two Dogs both due for Fetch at 10:00), the scheduler runs them simultaneously rather than sequencing them unnecessarily.
+- **Sequential scheduling for different breeds** — Tasks for pets of different types (e.g., a Dog and a Cat both due for Groom at 11:00) are automatically spaced back-to-back so the owner can complete each one without overlap.
+- **Earliest start time calculation** — After building the schedule, the scheduler surfaces the exact time the owner must begin to complete every task by its deadline.
+
+### Task Management
+- **Daily and weekly recurrence** — Marking a recurring task complete automatically creates the next occurrence for the following day or week, keeping the schedule current without manual re-entry.
+- **Due time as a hard constraint** — Every scheduled task is guaranteed to finish by its due time. The schedule shifts earlier if needed to satisfy all deadlines.
+- **Status tracking** — Tasks carry a status (pending / complete) that filters them in and out of the active schedule.
+
+### Conflict Detection
+- **Overlap detection** — The scheduler checks actual scheduled time slots (not just due times) and warns the owner when two incompatible tasks overlap.
+- **Smart conflict rules** — Same task + same breed at the same time is allowed (parallel is fine). Same task + different breeds, or different tasks at the same time, are flagged as conflicts with a human-readable warning and recommended fixes.
+
+### Filtering
+- **By status** — View only pending or only completed tasks.
+- **By pet** — Narrow the task list to a single pet's workload.

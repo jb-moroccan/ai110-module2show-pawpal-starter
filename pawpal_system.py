@@ -161,8 +161,8 @@ class Scheduler:
                     continue
                 items.append((pet, task, task.due_datetime(), timedelta(minutes=task.duration_minutes)))
 
-        # Sort by deadline (earliest first)
-        items.sort(key=lambda it: it[2])
+        # Sort by deadline (earliest first), then by priority (lower number = higher priority)
+        items.sort(key=lambda it: (it[2], it[1].priority))
 
         # Schedule tasks backwards from their deadlines to avoid overlaps.
         # Tasks can run simultaneously if they have the same name, same pet type,
@@ -367,20 +367,24 @@ class Scheduler:
         return warnings
 
     def sort_tasks(self) -> None:
-        """Sort the daily task list by scheduled start time (or due datetime as fallback).
+        """Sort the daily task list by scheduled start time, then by priority.
 
         Sorting Strategy: Prioritizes `scheduled_start` (set by `build_schedule()`) when
         available, falling back to `due_datetime()` for tasks without scheduled times.
-        This ensures the task list is always in chronological execution order.
+        For tasks at the same start time, sorts by priority (lower number = higher priority).
+        This ensures the task list is always in chronological execution order with high-priority
+        tasks first within each time slot.
 
         Time Complexity: O(n log n) due to Python's Timsort implementation.
 
         Side Effects:
             Modifies `self.daily_task_list` in-place (does not return a value).
         """
-        # Prefer sorting by scheduled start time when available, otherwise by due datetime
+        # Sort by scheduled start time, then by priority (lower number = higher priority)
+        # Use negative priority to reverse the order so 1 (high) comes before 3 (low)
         def key_fn(task: Task):
-            return getattr(task, "scheduled_start", task.due_datetime())
+            start_time = getattr(task, "scheduled_start", task.due_datetime())
+            return (start_time, -task.priority)
 
         self.daily_task_list.sort(key=key_fn)
 
