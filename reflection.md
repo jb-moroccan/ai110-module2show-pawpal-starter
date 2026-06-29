@@ -30,6 +30,10 @@
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+- One tradeoff my scheduler makes is that each the scheduler works backwards from deadlines. It places each task as late as possible while still meeting its due time. This means that tasks that could be started earlier in the day won't be started because it's optimized for being done as close to the due time as possible
+
+- The tradeoff is reasonable in this scenario because an owner may want some breaks in between tasks and not complete all the tasks in 1 giant time block. It seems more realistic for how a person lives life vs. doing 5 hours of tasks in a row. The owner can sleep in as late as possible while guaranteeing every task finishes by its deadline.
+
 ---
 
 ## 3. AI Collaboration
