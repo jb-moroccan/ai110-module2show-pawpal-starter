@@ -25,6 +25,9 @@
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
 
+The constraints my scheduler considers are time and priority.
+- I decided that these constraints mattered most, specifically time, because if the tasks are not completed within a certain period, then the pet could go hungry, get fleas, etc. so it has the biggest impact to the well being of the animals. 
+
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
@@ -43,10 +46,16 @@
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
 - What kinds of prompts or questions were most helpful?
 
+- I used AI tools (Copilot + Claude) during this project to help with desing brainstorming for the UML diagram and deciding what attributes each class should have. I also used the AI to help with debugging issues with any of the AI generated code that was created.
+- The prompts that were the most helpful were the ones where I gave it the exact files to look at as well as highlighting certain lines of code for the AI to focus on. This allowed it to pinpoint bugs that it could then address successfully. 
+
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
 - How did you evaluate or verify what the AI suggested?
+
+- I didn't accept the AI suggestion to include a filter schedule by pet. It wanted to make a filter to know what tasks each pet was going to complete in the daily schedule. 
+- I evaluated the suggestion by using the Streamlit app and trying to add some pets myself for an owner and seeing how it filtered the tasks by pet. When I tried to filter one of the pets, it deleted the entire section and nothing got filtrered. The AI tried to add something that wasn't needed and it didn't even work, so it goes to show don't always trust everything the AI outputs.
 
 ---
 
@@ -57,10 +66,21 @@
 - What behaviors did you test?
 - Why were these tests important?
 
+- Behaviors that I tested:
+✓ Sorting correctness: tasks returned in chronological order
+✓ Recurrence logic: daily task completion creates next day's task
+✓ Conflict detection: overlapping incompatible tasks are flagged
+✓ Parallel execution: same task for same-breed pets runs simultaneously
+✓ Sequential scheduling: same task for different-breed pets avoids conflicts
+- These tests are important because they ensure the scheduling system is putting the tasks in the proper order and that the tasks can actually be completed at the times it proposes. That's the key purpose behind the app. Parallel and sequential scheduling is the little bit I added that makes it a bit more complicated to schedule, so it's crucial to ensure this works correctly to also help save the owner time for tasks that can be done at the same time.
+
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
 - What edge cases would you test next if you had more time?
+
+- I'm fairly confident that the scheduler works correctly for the behaviors I planned for because I have 13 tests validating the behavior along with an example script with a schedule that works. 
+- The edge cases I'd test with more time are pets with the same name, repeated tasks for the same pet, and having so many tasks that a schedule is impossible to create to complete all the tasks.
 
 ---
 
@@ -70,10 +90,16 @@
 
 - What part of this project are you most satisfied with?
 
+- I'm most satisfied with the logic of allowing same breeds with the same tasks to have overlapping tasks while not the same breeds can't overlap. I feel like this is different than what was probably intended with the app but more realistic to what real life is since if you have 2 dogs, you can walk them at the same time. You don't need to do the tasks sequentially.
+
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
 
+- I'd focus mainly on the polish, ensuring edge cases are completely handled, and error handling. An example is that if you were to enter invalid input, like symbols or numbers for the name, it should disallow that input and ask for the user to enter a valid name. 
+
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+- One important thing I learned about designing systems is that they can and will evolve over time as more complexity is introduced into the system. AI tends to make things more robust and detailed, and as such, systems designed with just a UML diagram initially are almost guaranteed to be changed by the time it is written in code.

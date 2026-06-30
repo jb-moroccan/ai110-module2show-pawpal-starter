@@ -121,14 +121,7 @@ The test suite (`tests/test_pawpal.py`) includes 13 tests covering:
 6. **Time Management** — Tasks finish by their due times; different pet types are scheduled sequentially to avoid conflicts
 7. **Mixed Recurrence** — Daily and weekly tasks coexist without conflicts
 
-Key tests verify:
-- ✓ Sorting correctness: tasks returned in chronological order
-- ✓ Recurrence logic: daily task completion creates next day's task
-- ✓ Conflict detection: overlapping incompatible tasks are flagged
-- ✓ Parallel execution: same task for same-breed pets runs simultaneously
-- ✓ Sequential scheduling: same task for different-breed pets avoids conflicts
-
-Confidence Level: 4 stars - all tests past, not 100% if every possible edge case has been handled or super complex conflicts have been able to be resolved
+Confidence Level: 4 stars - all tests pass, not 100% if every possible edge case has been handled or super complex conflicts have been able to be resolved
 
 Sample test output:
 
